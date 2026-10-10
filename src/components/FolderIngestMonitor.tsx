@@ -41,6 +41,7 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'status_board' | 'directory_files'>('status_board');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize and keep tasks in sync with invoices
   const [tasks, setTasks] = useState<FileIndexTask[]>(() => {
@@ -88,62 +89,103 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
     }
   }, [invoices.length]);
 
-  // Trigger browser directory picker
+  // Handle files selected via the native folder input
+  const handleFolderSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const firstPath = files[0].webkitRelativePath || '';
+      const folderName = firstPath.split('/')[0] || 'Selected_Folder';
+
+      const validFiles = files.filter(
+        f =>
+          f.name.endsWith('.pdf') ||
+          f.name.endsWith('.csv') ||
+          f.name.endsWith('.png') ||
+          f.name.endsWith('.jpg') ||
+          f.name.endsWith('.jpeg')
+      );
+
+      onUpdateMonitoringState({
+        ...monitoringState,
+        isMonitoring: true,
+        folderName: `~/${folderName}/`,
+        lastScannedAt: new Date().toLocaleTimeString(),
+        totalFilesTracked: validFiles.length,
+        monitoredFileNames: validFiles.map(f => f.name),
+      });
+
+      if (validFiles.length > 0) {
+        await processBatchFiles(validFiles);
+      } else {
+        setProcessingStatus(`Directory "${folderName}" connected (${files.length} non-invoice files detected).`);
+      }
+    }
+    e.target.value = '';
+  };
+
+  // Trigger browser directory picker (safely bypasses showDirectoryPicker in cross-origin iframes)
   const handleSelectFolder = async () => {
-    try {
-      if ('showDirectoryPicker' in window) {
+    // Cross-origin iframes cannot call showDirectoryPicker in Chromium
+    const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
+    if (!isInIframe && typeof window !== 'undefined' && 'showDirectoryPicker' in window) {
+      try {
         // @ts-ignore
         const dirHandle = await (window as any).showDirectoryPicker();
-        const folderName = dirHandle.name;
+        if (dirHandle) {
+          const folderName = dirHandle.name;
+          setIsScanning(true);
+          setProcessingStatus(`Connecting to folder: ${folderName}...`);
 
-        setIsScanning(true);
-        setProcessingStatus(`Connecting to folder: ${folderName}...`);
+          const scannedFiles: Array<{ name: string; file: File }> = [];
 
-        const scannedFiles: Array<{ name: string; file: File }> = [];
-
-        // Traverse directory files
-        for await (const entry of dirHandle.values()) {
-          if (entry.kind === 'file') {
-            const file = await entry.getFile();
-            if (
-              file.name.endsWith('.pdf') ||
-              file.name.endsWith('.csv') ||
-              file.name.endsWith('.png') ||
-              file.name.endsWith('.jpg') ||
-              file.name.endsWith('.jpeg')
-            ) {
-              scannedFiles.push({ name: file.name, file });
+          for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+              const file = await entry.getFile();
+              if (
+                file.name.endsWith('.pdf') ||
+                file.name.endsWith('.csv') ||
+                file.name.endsWith('.png') ||
+                file.name.endsWith('.jpg') ||
+                file.name.endsWith('.jpeg')
+              ) {
+                scannedFiles.push({ name: file.name, file });
+              }
             }
           }
-        }
 
-        onUpdateMonitoringState({
-          ...monitoringState,
-          isMonitoring: true,
-          folderName: `~/${folderName}/`,
-          folderHandle: dirHandle,
-          lastScannedAt: new Date().toLocaleTimeString(),
-          totalFilesTracked: scannedFiles.length,
-          monitoredFileNames: scannedFiles.map(f => f.name),
-        });
+          onUpdateMonitoringState({
+            ...monitoringState,
+            isMonitoring: true,
+            folderName: `~/${folderName}/`,
+            folderHandle: dirHandle,
+            lastScannedAt: new Date().toLocaleTimeString(),
+            totalFilesTracked: scannedFiles.length,
+            monitoredFileNames: scannedFiles.map(f => f.name),
+          });
 
-        if (scannedFiles.length > 0) {
-          await processBatchFiles(scannedFiles.map(s => s.file));
-        } else {
-          setProcessingStatus(`Folder "${folderName}" connected. Monitoring for incoming invoices.`);
+          if (scannedFiles.length > 0) {
+            await processBatchFiles(scannedFiles.map(s => s.file));
+          } else {
+            setProcessingStatus(`Folder "${folderName}" connected. Monitoring for incoming invoices.`);
+          }
+          setIsScanning(false);
+          return;
         }
-        setIsScanning(false);
-      } else {
-        // Fallback for browsers without File System Access API
-        if (fileInputRef.current) {
-          fileInputRef.current.click();
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          setIsScanning(false);
+          return;
         }
+        // Gracefully ignore and fallback to folder input
       }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('Directory picker error:', err);
-      }
-      setIsScanning(false);
+    }
+
+    // Direct fallback for iframes and browsers: Trigger native directory file input
+    if (folderInputRef.current) {
+      folderInputRef.current.click();
+    } else if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -839,6 +881,18 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
           </div>
         </div>
       )}
+
+      {/* Hidden Native Folder Input (works in cross-origin iframes via webkitdirectory) */}
+      <input
+        ref={folderInputRef}
+        type="file"
+        // @ts-ignore
+        webkitdirectory=""
+        directory=""
+        multiple
+        onChange={handleFolderSelected}
+        className="hidden"
+      />
 
       {/* Hidden File Input for browsing */}
       <input
