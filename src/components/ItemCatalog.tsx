@@ -165,7 +165,15 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       <div className="sm:hidden space-y-2.5">
         {sortedItems.length === 0 ? (
           <div className="p-8 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-xl text-xs">
-            No ingredients match your search.
+            {items.length === 0 ? (
+              <>
+                <Layers className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                <p className="font-semibold text-slate-300">No items tracked yet</p>
+                <p className="text-slate-500 mt-1">Upload invoices to begin automatically cataloging ingredients and unit pricing.</p>
+              </>
+            ) : (
+              'No ingredients match your search.'
+            )}
           </div>
         ) : (
           sortedItems.map(item => {
@@ -300,8 +308,16 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
               {sortedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-500">
-                    No ingredients match the current search filters.
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
+                    {items.length === 0 ? (
+                      <div className="max-w-sm mx-auto">
+                        <Layers className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                        <p className="font-semibold text-slate-300">No ingredients in catalog</p>
+                        <p className="text-slate-500 mt-1">Upload or drop invoices in the Folder Monitor to track purchased ingredients and price history.</p>
+                      </div>
+                    ) : (
+                      'No ingredients match the current search filters.'
+                    )}
                   </td>
                 </tr>
               ) : (

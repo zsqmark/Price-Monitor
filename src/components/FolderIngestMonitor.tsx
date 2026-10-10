@@ -25,7 +25,7 @@ interface FolderIngestMonitorProps {
   onUpdateMonitoringState: (state: FolderMonitoringState) => void;
   onAddInvoices: (newInvoices: InvoiceRecord[]) => void;
   onSelectInvoice: (invoice: InvoiceRecord) => void;
-  onResetToDemo: () => void;
+  onClearAllInvoices?: () => void;
 }
 
 export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
@@ -34,7 +34,7 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
   onUpdateMonitoringState,
   onAddInvoices,
   onSelectInvoice,
-  onResetToDemo,
+  onClearAllInvoices,
 }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -64,28 +64,10 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
     }));
   });
 
-  // Re-sync tasks if demo reset occurs
+  // Clear tasks when invoices are cleared
   useEffect(() => {
-    if (invoices.length === 12 && tasks.length !== 12) {
-      setTasks(
-        [...invoices].reverse().map(inv => ({
-          id: `task-${inv.id}`,
-          fileName: inv.fileName,
-          fileSize: inv.fileSize || 185000,
-          stage: 'completed' as FileIndexStage,
-          progressPct: 100,
-          startedAt: inv.date,
-          completedAt: inv.date,
-          invoiceNumber: inv.invoiceNumber,
-          vendorName: inv.vendorName,
-          itemsCount: inv.items.length,
-          totalAmount: inv.totalAmount,
-          spikeDetected: inv.status === 'flagged',
-          spikeItemName: inv.status === 'flagged' ? inv.items[0]?.name : undefined,
-          spikeVariancePct: inv.status === 'flagged' ? 48 : undefined,
-          invoiceRecord: inv,
-        }))
-      );
+    if (invoices.length === 0 && tasks.length > 0) {
+      setTasks([]);
     }
   }, [invoices.length]);
 
@@ -695,13 +677,15 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
                 <span>Sync Active</span>
               </span>
             </div>
-            <button
-              onClick={onResetToDemo}
-              className="text-[11px] text-amber-400/90 hover:underline cursor-pointer"
-              title="Reset to 12 realistic sample restaurant invoices"
-            >
-              Reset Demo
-            </button>
+            {onClearAllInvoices && invoices.length > 0 && (
+              <button
+                onClick={onClearAllInvoices}
+                className="text-[11px] text-rose-400 hover:text-rose-300 hover:underline cursor-pointer transition-colors"
+                title="Clear all recorded invoices from storage"
+              >
+                Clear All Data
+              </button>
+            )}
           </div>
         </div>
 
@@ -834,7 +818,18 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
-                  {[...invoices].reverse().map(inv => (
+                  {invoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-12 px-4 text-center text-slate-500">
+                        <FolderOpen className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-300">No invoices in directory</p>
+                        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                          Drop invoice documents above or browse files to automatically index and audit kitchen food costs.
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    [...invoices].reverse().map(inv => (
                     <tr
                       key={inv.id}
                       onClick={() => onSelectInvoice(inv)}
@@ -874,8 +869,9 @@ export const FolderIngestMonitor: React.FC<FolderIngestMonitorProps> = ({
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  ))
+                )}
+              </tbody>
               </table>
             </div>
           </div>

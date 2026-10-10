@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { INITIAL_INVOICES } from './data/initialInvoices';
 import {
   InvoiceRecord,
   TrackedItem,
@@ -23,15 +22,23 @@ import { InvoiceDetailModal } from './components/InvoiceDetailModal';
 import { ChatAssistant } from './components/ChatAssistant';
 
 export default function App() {
-  // Invoices state with localStorage persistence
+  // Invoices state with localStorage persistence - purged of all demo data
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => {
     try {
+      // One-time purge of legacy demo fixtures stored in client browser
+      const isPurged = localStorage.getItem('lardertrack_demo_purged_v2');
+      if (!isPurged) {
+        localStorage.removeItem('lardertrack_invoices');
+        localStorage.removeItem('lardertrack_dismissed_alerts');
+        localStorage.setItem('lardertrack_demo_purged_v2', 'true');
+        return [];
+      }
       const saved = localStorage.getItem('lardertrack_invoices');
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.warn('Failed to load saved invoices:', e);
     }
-    return INITIAL_INVOICES;
+    return [];
   });
 
   // Alert settings state with localStorage persistence
@@ -58,11 +65,11 @@ export default function App() {
 
   // Folder monitoring state
   const [monitoringState, setMonitoringState] = useState<FolderMonitoringState>({
-    isMonitoring: true,
-    folderName: '~/Documents/Kitchen_Invoices_2026/',
-    lastScannedAt: new Date().toLocaleTimeString(),
-    totalFilesTracked: INITIAL_INVOICES.length,
-    monitoredFileNames: INITIAL_INVOICES.map(i => i.fileName),
+    isMonitoring: false,
+    folderName: 'No folder linked',
+    lastScannedAt: 'Never',
+    totalFilesTracked: 0,
+    monitoredFileNames: [],
     isScanning: false,
     autoSyncIntervalMinutes: 15,
   });
@@ -133,15 +140,24 @@ export default function App() {
     });
   };
 
-  const handleResetToDemo = () => {
-    setInvoices(INITIAL_INVOICES);
+  const handleClearAllInvoices = () => {
+    setInvoices([]);
     setDismissedAlertIds([]);
     setAlertSettings(DEFAULT_ALERT_SETTINGS);
     setMonitoringState(prev => ({
       ...prev,
-      folderName: '~/Documents/Kitchen_Invoices_2026/',
-      lastScannedAt: new Date().toLocaleTimeString(),
+      isMonitoring: false,
+      folderName: 'No folder linked',
+      lastScannedAt: 'Never',
+      totalFilesTracked: 0,
+      monitoredFileNames: [],
     }));
+    try {
+      localStorage.removeItem('lardertrack_invoices');
+      localStorage.removeItem('lardertrack_dismissed_alerts');
+    } catch (e) {
+      console.warn('Failed to clear storage:', e);
+    }
   };
 
   const handleSelectInvoiceByNumber = (invoiceNumber: string) => {
@@ -224,7 +240,7 @@ export default function App() {
             onUpdateMonitoringState={setMonitoringState}
             onAddInvoices={handleAddInvoices}
             onSelectInvoice={setSelectedInvoice}
-            onResetToDemo={handleResetToDemo}
+            onClearAllInvoices={handleClearAllInvoices}
           />
         )}
 

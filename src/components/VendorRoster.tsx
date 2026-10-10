@@ -78,7 +78,18 @@ export const VendorRoster: React.FC<VendorRosterProps> = ({
 
       {/* Vendors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredVendors.map(vendor => {
+        {filteredVendors.length === 0 ? (
+          <div className="col-span-full bg-slate-900/60 border border-slate-800 rounded-xl p-12 text-center text-xs">
+            <Building2 className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+            <h3 className="text-base font-bold text-white">No Vendors Found</h3>
+            <p className="text-slate-400 max-w-md mx-auto mt-1">
+              {searchQuery.trim()
+                ? 'No suppliers match your search query.'
+                : 'Vendors and food distributors will automatically populate here as invoices are indexed.'}
+            </p>
+          </div>
+        ) : (
+          filteredVendors.map(vendor => {
           const isAboveAvg = vendor.priceCompetitiveness === 'above_average';
           const isBelowAvg = vendor.priceCompetitiveness === 'below_average';
 
@@ -162,7 +173,7 @@ export const VendorRoster: React.FC<VendorRosterProps> = ({
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Selected Vendor Drilldown Drawer / Modal */}

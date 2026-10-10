@@ -394,9 +394,28 @@ export const IndexingStatusBoard: React.FC<IndexingStatusBoardProps> = ({
         {/* Task List: Empty state */}
         {filteredTasks.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400">
-            <CheckCircle className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-            <p className="font-semibold text-slate-300">No documents found matching this filter.</p>
-            <p className="text-slate-500 mt-1">Try switching tabs or resetting your search term.</p>
+            {tasks.length === 0 ? (
+              <div className="max-w-md mx-auto">
+                <FolderSync className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <h4 className="text-sm font-bold text-slate-200">No Invoices Uploaded or Indexed Yet</h4>
+                <p className="text-slate-400 mt-1 mb-4 leading-relaxed">
+                  Upload PDF invoices, receipt photos, or CSV orders to start automated extraction, price variance audits, and catalog indexing.
+                </p>
+                <button
+                  onClick={onBrowseFiles}
+                  className="px-4 py-2 text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  <span>Upload Invoices to Ingest</span>
+                </button>
+              </div>
+            ) : (
+              <>
+                <CheckCircle className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <p className="font-semibold text-slate-300">No documents found matching this filter.</p>
+                <p className="text-slate-500 mt-1">Try switching tabs or resetting your search term.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-800/70">

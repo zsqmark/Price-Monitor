@@ -45,12 +45,12 @@ interface ChatAssistantProps {
 }
 
 const STARTER_QUESTIONS = [
-  'Which ingredients had the largest price spikes this month?',
-  'How much extra are we paying for avocados compared to our historical average?',
-  'Which vendor is charging the most for our kitchen supplies?',
-  'Give me 3 menu engineering ideas to mitigate the butter and dairy price surges',
-  'What is our estimated 30-day excess spend from active price spikes?',
-  'Are there any ingredients where prices actually dropped recently?',
+  'Which ingredients had the largest price spikes recently?',
+  'How do our latest invoice prices compare to our historical averages?',
+  'Which distributor accounts for the highest percentage of food spend?',
+  'Suggest 3 menu engineering strategies to protect restaurant gross margin',
+  'What is our estimated monthly impact from active price surges?',
+  'Which ingredient categories have shown the highest price volatility?',
 ];
 
 export const ChatAssistant: React.FC<ChatAssistantProps> = ({
@@ -75,7 +75,8 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
       {
         id: 'init-1',
         role: 'assistant',
-        content: `👋 Hello Chef! I am **LarderBot**, your AI Food Cost & Inventory Auditor.
+        content: invoices.length > 0
+          ? `👋 Hello Chef! I am **LarderBot**, your AI Food Cost & Inventory Auditor.
 
 I have direct access to your **${invoices.length} indexed invoices**, **${trackedItems.length} purchased items**, and **${alerts.filter(a => !a.dismissed).length} active price margin alerts**.
 
@@ -85,7 +86,12 @@ Ask me any questions about:
 • Recipe costing, portion controls, and menu yield optimization
 • Historical price trends and inflation forecasts
 
-Feel free to ask a question below or pick a quick topic to start!`,
+Feel free to ask a question below or pick a quick topic to start!`
+          : `👋 Hello Chef! I am **LarderBot**, your AI Food Cost & Inventory Auditor.
+
+No invoices have been indexed yet. Once you link a folder or drop your kitchen invoice files (PDF, CSV, image receipts), I will automatically audit unit prices, calculate margin variances, compare supplier quotes, and identify cost-saving opportunities!
+
+You can upload invoices anytime in the **Folder Monitor** tab.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         modelUsed: 'gemini-3.8-flash',
       },

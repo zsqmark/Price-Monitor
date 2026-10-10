@@ -144,7 +144,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="text-[10px] sm:text-xs text-slate-400 mt-2 pt-1 border-t border-slate-800/60 truncate">
-            <span>6 active vendors</span>
+            <span>{new Set(invoices.map(i => i.vendorName)).size} active vendors</span>
           </div>
         </div>
 
@@ -211,66 +211,76 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 Ingredients with highest percentage price increase on recent deliveries
               </p>
             </div>
-            <button
-              onClick={() => onNavigateToTab('items')}
-              className="text-xs text-amber-400 hover:underline font-medium cursor-pointer"
-            >
-              View all &rarr;
-            </button>
+            {topSurges.length > 0 && (
+              <button
+                onClick={() => onNavigateToTab('items')}
+                className="text-xs text-amber-400 hover:underline font-medium cursor-pointer"
+              >
+                View all &rarr;
+              </button>
+            )}
           </div>
 
-          <div className="space-y-3">
-            {topSurges.map((item, idx) => {
-              const diffDollars = item.currentPrice - item.historicalAvgPrice;
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => onSelectItem(item)}
-                  className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950/80 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <span>{item.category}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{item.lastVendor}</span>
+          {topSurges.length === 0 ? (
+            <div className="p-8 text-center bg-slate-950/40 rounded-lg border border-slate-800/60 text-xs text-slate-400">
+              <TrendingUp className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <p className="font-semibold text-slate-300">No price surges recorded</p>
+              <p className="text-slate-500 mt-1">Upload invoices to automatically track unit costs and detect margin spikes.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topSurges.map((item, idx) => {
+                const diffDollars = item.currentPrice - item.historicalAvgPrice;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onSelectItem(item)}
+                    className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950/80 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <span>{item.category}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{item.lastVendor}</span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors mt-0.5 flex items-center gap-1">
+                          <span>{item.name}</span>
+                          <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </h4>
                       </div>
-                      <h4 className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors mt-0.5 flex items-center gap-1">
-                        <span>{item.name}</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </h4>
+
+                      <div className="text-right shrink-0">
+                        <div className="flex items-center justify-end gap-1 font-mono font-bold text-sm text-rose-400">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>+{item.varianceFromAvgPct}%</span>
+                        </div>
+                        <div className="text-xs text-slate-400 font-mono mt-0.5">
+                          +${diffDollars.toFixed(2)} / {item.unit}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <div className="flex items-center justify-end gap-1 font-mono font-bold text-sm text-rose-400">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>+{item.varianceFromAvgPct}%</span>
+                    {/* Price Comparison Sub-bar */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                      <div>
+                        <span>Current: </span>
+                        <span className="font-mono font-bold text-white">${item.currentPrice.toFixed(2)}</span>
                       </div>
-                      <div className="text-xs text-slate-400 font-mono mt-0.5">
-                        +${diffDollars.toFixed(2)} / {item.unit}
+                      <div>
+                        <span>Historical Avg: </span>
+                        <span className="font-mono text-slate-300">${item.historicalAvgPrice.toFixed(2)}</span>
+                      </div>
+                      <div>
+                        <span>Prior: </span>
+                        <span className="font-mono text-slate-300">${item.priorPrice.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
-
-                  {/* Price Comparison Sub-bar */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
-                    <div>
-                      <span>Current: </span>
-                      <span className="font-mono font-bold text-white">${item.currentPrice.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span>Historical Avg: </span>
-                      <span className="font-mono text-slate-300">${item.historicalAvgPrice.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span>Prior: </span>
-                      <span className="font-mono text-slate-300">${item.priorPrice.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Right: Recent Invoices Activity */}
@@ -288,57 +298,71 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               onClick={() => onNavigateToTab('folder')}
               className="text-xs text-amber-400 hover:underline font-medium cursor-pointer"
             >
-              Scan Folder &rarr;
+              {invoices.length > 0 ? 'Folder Status \u2192' : 'Upload Invoices \u2192'}
             </button>
           </div>
 
-          <div className="space-y-3">
-            {recentInvoices.map(inv => (
-              <div
-                key={inv.id}
-                onClick={() => onSelectInvoice(inv)}
-                className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950/80 transition-all cursor-pointer group"
+          {recentInvoices.length === 0 ? (
+            <div className="p-8 text-center bg-slate-950/40 rounded-lg border border-slate-800/60 text-xs text-slate-400">
+              <Receipt className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <p className="font-semibold text-slate-300">No invoices ingested yet</p>
+              <p className="text-slate-500 mt-1 mb-3">Sync your folder or drop PDF / CSV invoices to audit ingredients.</p>
+              <button
+                onClick={() => onNavigateToTab('folder')}
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors cursor-pointer"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span className="font-mono">{inv.date}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{inv.vendorCategory}</span>
-                      {inv.status === 'flagged' && (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span className="text-rose-400 font-semibold">Spike Flagged</span>
-                        </>
-                      )}
+                Upload Invoices &rarr;
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentInvoices.map(inv => (
+                <div
+                  key={inv.id}
+                  onClick={() => onSelectInvoice(inv)}
+                  className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950/80 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <span className="font-mono">{inv.date}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{inv.vendorCategory}</span>
+                        {inv.status === 'flagged' && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-rose-400 font-semibold">Spike Flagged</span>
+                          </>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors mt-0.5 flex items-center gap-1.5">
+                        <span>{inv.vendorName}</span>
+                        <span className="text-xs font-normal text-slate-400 font-mono">
+                          (#{inv.invoiceNumber})
+                        </span>
+                      </h4>
                     </div>
-                    <h4 className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors mt-0.5 flex items-center gap-1.5">
-                      <span>{inv.vendorName}</span>
-                      <span className="text-xs font-normal text-slate-400 font-mono">
-                        (#{inv.invoiceNumber})
-                      </span>
-                    </h4>
+
+                    <div className="text-right shrink-0">
+                      <div className="font-mono font-bold text-sm text-white">
+                        ${inv.totalAmount.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        {inv.items.length} line items
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <div className="font-mono font-bold text-sm text-white">
-                      ${inv.totalAmount.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                      {inv.items.length} line items
-                    </div>
+                  <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
+                    <span className="truncate max-w-[260px] text-slate-400">File: {inv.fileName}</span>
+                    <span className="text-amber-400/90 group-hover:underline text-[11px] font-medium">
+                      Inspect details &rarr;
+                    </span>
                   </div>
                 </div>
-
-                <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
-                  <span className="truncate max-w-[260px] text-slate-400">File: {inv.fileName}</span>
-                  <span className="text-amber-400/90 group-hover:underline text-[11px] font-medium">
-                    Inspect details &rarr;
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -347,22 +371,28 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <h3 className="text-sm font-bold text-white tracking-tight mb-3">
           Spend Distribution by Ingredient Category
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from(categorySpend.entries()).map(([cat, amount]) => {
-            const pct = totalSpend > 0 ? (amount / totalSpend) * 100 : 0;
-            return (
-              <div key={cat} className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-3">
-                <span className="text-xs text-slate-400 block truncate">{cat}</span>
-                <div className="text-base font-bold font-mono text-white mt-1">
-                  ${amount.toFixed(0)}
+        {categorySpend.size === 0 ? (
+          <div className="p-6 text-center text-xs text-slate-500 bg-slate-950/40 rounded-lg border border-slate-800/60">
+            Ingredient category spend distribution will appear here once invoices are ingested.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {Array.from(categorySpend.entries()).map(([cat, amount]) => {
+              const pct = totalSpend > 0 ? (amount / totalSpend) * 100 : 0;
+              return (
+                <div key={cat} className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-3">
+                  <span className="text-xs text-slate-400 block truncate">{cat}</span>
+                  <div className="text-base font-bold font-mono text-white mt-1">
+                    ${amount.toFixed(0)}
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono mt-0.5">
+                    {pct.toFixed(1)}% of budget
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400 font-mono mt-0.5">
-                  {pct.toFixed(1)}% of budget
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

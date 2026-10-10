@@ -12,6 +12,7 @@ import {
   Building2,
   FileText,
   RotateCcw,
+  ShieldAlert,
 } from 'lucide-react';
 import {
   PriceSpikeAlert,
@@ -291,13 +292,25 @@ export const PriceAlertsCenter: React.FC<PriceAlertsCenterProps> = ({
       {/* Alerts Stream List */}
       {visibleAlerts.length === 0 ? (
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
-          <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white">No Price Margin Breaches Found</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-            {showDismissed
-              ? 'There are currently no dismissed alerts.'
-              : `All recent delivery prices are within your +${settings.marginThresholdPct}% margin threshold.`}
-          </p>
+          {trackedItems.length === 0 ? (
+            <>
+              <ShieldAlert className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-white">No Price Margin Breaches</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                No invoices or ingredients have been recorded yet. Ingest invoices from your kitchen directory to monitor unit costs and detect margin surges.
+              </p>
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-white">No Price Margin Breaches Found</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                {showDismissed
+                  ? 'There are currently no dismissed alerts.'
+                  : `All recent delivery prices are within your +${settings.marginThresholdPct}% margin threshold.`}
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
