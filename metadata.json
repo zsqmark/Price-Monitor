@@ -1,0 +1,8 @@
+{
+  "name": "LarderTrack - Restaurant Inventory & Cost Variance Monitor",
+  "description": "Monitor restaurant purchase invoice folders, track food costs, compare vendor pricing, and get automated alerts when ingredient prices exceed historical averages or profit margins.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
